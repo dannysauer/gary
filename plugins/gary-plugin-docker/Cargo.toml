@@ -12,5 +12,5 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 core = { path = "../../core" , version = "0.0.1", package = "gary-core"}
 bollard = "0.3"
-tokio = "0.1"
+tokio = "1.8"
 futures = "0.1"
