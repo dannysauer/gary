@@ -739,7 +739,7 @@ dependencies = [
  "serde",
  "serde_cbor 0.11.1",
  "serde_derive",
- "tokio 0.1.22",
+ "tokio 0.2.22",
  "zmq",
 ]
 
@@ -756,7 +756,7 @@ dependencies = [
  "serde",
  "serde_cbor 0.9.0",
  "serde_derive",
- "tokio 0.1.22",
+ "tokio 0.2.22",
  "zmq",
 ]
 
