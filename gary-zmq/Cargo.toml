@@ -10,7 +10,7 @@ common = { path = "../common", package = "gary-common"}
 daemonize = "0.4.1"
 log = "0.4.6"
 tokio = "0.1.21"
-serde_cbor = "0.11.1"
+serde_cbor = "0.10.2"
 serde = { version = "1.0.114", features = ["derive"]}
 serde_derive = "1.0.114"
 chrono = { version = "0.4", features = ["serde"] }
