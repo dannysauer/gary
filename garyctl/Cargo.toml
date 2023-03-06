@@ -10,7 +10,7 @@ zmq = "0.9"
 common = { path = "../common", package = "gary-common"}
 daemonize = "0.4.1"
 log = "0.4.6"
-tokio = "0.1.21"
+tokio = "0.2.22"
 serde_cbor = "0.9.0"
 serde = { version = "1.0", features = ["derive"]}
 serde_derive = "1.0"
