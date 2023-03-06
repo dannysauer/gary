@@ -164,7 +164,7 @@ dependencies = [
  "failure",
  "futures",
  "hex",
- "http 0.1.18",
+ "http 0.1.21",
  "hyper 0.12.33",
  "hyperlocal",
  "log",
@@ -793,7 +793,7 @@ dependencies = [
  "bytes 0.4.12",
  "fnv",
  "futures",
- "http 0.1.18",
+ "http 0.1.21",
  "indexmap",
  "log",
  "slab",
@@ -849,9 +849,9 @@ checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 
 [[package]]
 name = "http"
-version = "0.1.18"
+version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "372bcb56f939e449117fb0869c2e8fd8753a8223d92a172c6e808cf123a5b6e4"
+checksum = "d6ccf5ede3a895d8856620237b2f02972c1bbc78d2965ad7fe8838d4a0ed41f0"
 dependencies = [
  "bytes 0.4.12",
  "fnv",
@@ -877,7 +877,7 @@ checksum = "6741c859c1b2463a423a1dbce98d418e6c3c3fc720fb0d45528657320920292d"
 dependencies = [
  "bytes 0.4.12",
  "futures",
- "http 0.1.18",
+ "http 0.1.21",
  "tokio-buf",
 ]
 
@@ -922,7 +922,7 @@ dependencies = [
  "futures",
  "futures-cpupool",
  "h2 0.1.26",
- "http 0.1.18",
+ "http 0.1.21",
  "http-body 0.1.0",
  "httparse",
  "iovec",
