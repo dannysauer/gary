@@ -11,7 +11,7 @@ path = "src/main.rs"
 [features]
 
 [dependencies]
-clap = "2.33.0"
+clap = "4"
 core = { path = "core"}
 gary-zmq = { path = "gary-zmq" }
 executor = { path = "executor" }
@@ -29,4 +29,7 @@ members = [
     "executor",
     "executor/process",
     "executor/docker",
+    "plugins/gary-plugin-docker",
+    "plugins/gary-plugin-cri",
+    "plugins/gary-scheduler",
 ]

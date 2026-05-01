@@ -1,92 +1,66 @@
-extern crate clap;
-extern crate core;
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap::{Arg, ArgMatches, Command};
 use core::cluster_api::*;
 use core::defaults::*;
-use zmq::{Context, Message};
 
 fn main() {
-    let matches = App::new("Gary")
+    let matches = Command::new("garyctl")
         .version("0.1.0")
         .author("Marek C. <countsmarek@gmail.com>")
-        .about("Does awesome things! very awesome.")
+        .about("Control tool for Gary cluster")
         .arg(
-            Arg::with_name("config")
-                .short("c")
+            Arg::new("config")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
-                .help("Sets a custom config file")
-                .takes_value(true),
+                .help("Sets a custom config file"),
         )
         .arg(
-            Arg::with_name("v")
-                .short("v")
-                .multiple(true)
+            Arg::new("v")
+                .short('v')
+                .action(clap::ArgAction::Count)
                 .help("Sets the level of verbosity"),
         )
         .subcommand(
-            SubCommand::with_name("get")
-                .about("gets recourse types")
-                .version("0.1")
-                .author("Marek C. <countsmarek@gmail.com>")
-                .subcommand(
-                    SubCommand::with_name("nodes")
-                        .about("gets recourse types")
-                        .version("0.1")
-                        .author("Marek C. <countsmarek@gmail.com>")
-                        .arg(
-                            Arg::with_name("target")
-                                .short("t")
-                                .long("target")
-                                .takes_value(true)
-                                .help("print debug information verbosely"),
-                        ),
+            Command::new("get").about("Get resources").subcommand(
+                Command::new("nodes").about("List cluster nodes").arg(
+                    Arg::new("target")
+                        .short('t')
+                        .long("target")
+                        .help("Target node to query"),
                 ),
-        )
-        .arg(
-            Arg::with_name("target")
-                .short("t")
-                .long("target")
-                .multiple(false)
-                .takes_value(true)
-                .help("Setting this flag will enable running as a daemon"),
+            ),
         )
         .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("get") {
-        if let Some(matches) = matches.subcommand_matches("nodes") {
-            get("nodes".to_string(), matches)
+    if let Some(get_matches) = matches.subcommand_matches("get") {
+        if let Some(node_matches) = get_matches.subcommand_matches("nodes") {
+            get("nodes".to_string(), node_matches);
         }
     }
-
-    println!("Hello, world!");
 }
 
-fn get(resource_type: String, matches: &ArgMatches) {
+fn get(_resource_type: String, matches: &ArgMatches) {
     println!("getting nodes");
 
-    //Default target
-    let mut target = String::from(TARGET.clone());
-
-    if matches.is_present("target") {
-        target = String::from(matches.value_of("target").unwrap());
-    }
+    let target = matches
+        .get_one::<String>("target")
+        .map(|s| s.as_str())
+        .unwrap_or(TARGET);
 
     let connection = format!("tcp://{}:{}", target, API_PORT);
 
     println!("Getting list of nodes from {}", target);
     let ctx = zmq::Context::new();
-    let mut sock = ctx.socket(zmq::SocketType::REQ).unwrap();
+    let sock = ctx.socket(zmq::SocketType::REQ).unwrap();
     let _ = sock.connect(&connection);
     let payload = ClusterRequest {
         action: ResourceAction::Get,
         r_type: ResourceType::Nodes,
-        args: "Marek".to_string(),
+        args: String::new(),
     };
     let serialized_msg = serde_cbor::to_vec(&payload).unwrap();
-    println!("-> {:?}", payload);
     let _ = sock.send(serialized_msg, 0);
     if let Ok(msg) = sock.recv_msg(0) {
-        println!("Got response {:?}", msg);
+        println!("Nodes:\n{}", msg.as_str().unwrap_or("(invalid utf8)"));
     }
 }

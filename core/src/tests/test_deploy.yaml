@@ -11,11 +11,9 @@ spec:
       name: ~
       labels:
         app: nginx
-    spec:
-      DockerSpec:
-        containers:
-          - name: nginx
-            image: "nginx:1.7.9"
-            ports:
-              - container_port: 80
-
+    spec: !DockerSpec
+      containers:
+        - name: nginx
+          image: "nginx:1.7.9"
+          ports:
+            - container_port: 80

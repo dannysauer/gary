@@ -21,12 +21,13 @@ pub fn manage_deployments(
     let timeout = Duration::from_secs(15);
     loop {
         let msg = rx.recv_timeout(timeout);
-        if msg.is_err() {
-            // https://doc.rust-lang.org/std/sync/mpsc/enum.RecvTimeoutError.html
-            // Timeout or Disconnected
-            debug(&debug_tx, "manager command receive timed out");
-        } else {
-            match msg.unwrap() {
+        match msg {
+            Err(_) => {
+                // https://doc.rust-lang.org/std/sync/mpsc/enum.RecvTimeoutError.html
+                // Timeout or Disconnected
+                debug(&debug_tx, "manager command receive timed out");
+            }
+            Ok(cmd) => match cmd {
                 // new deployment
                 DeploymentCommand::NewDeploy(d) => {
                     let name = d.metadata.name.clone().unwrap_or("unknown".to_string());
@@ -35,7 +36,7 @@ pub fn manage_deployments(
                     tx.send(DeploymentReply::NewDeploy(orig_name, Result::Ok(name)))
                         .unwrap(); //TODO: handle error?
                 } // other commands!
-            }
+            },
         }
     }
 }

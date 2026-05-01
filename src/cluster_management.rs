@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 pub fn start_node(
     sender: Sender<&'static str>,
     exec_cmd_tx: Sender<DeploymentCommand>,
-    exec_cmd_rx: Receiver<DeploymentReply>,
+    _exec_cmd_rx: Receiver<DeploymentReply>,
     host_addr: &str,
     init_neighbors: Arc<Mutex<HashMap<String, DateTime<Utc>>>>,
     // node_listener_port: u16,

@@ -1,7 +1,7 @@
 use crate::cluster_api;
 use crate::cluster_management;
 use crate::deployment_management;
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use core::data::{DeploymentCommand, DeploymentReply};
 use daemonize::Daemonize;
 // use std::sync::mpsc::{Receiver, Sender};
@@ -13,49 +13,44 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 pub fn cli() {
-    let matches = App::new("Gary")
+    let matches = Command::new("Gary")
         .version("0.1.0")
         .author("Marek C. <countsmarek@gmail.com>")
         .about("Does awesome things! very awesome.")
         .arg(
-            Arg::with_name("config")
-                .short("c")
+            Arg::new("config")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
-                .help("Sets a custom config file")
-                .multiple(false)
-                .takes_value(true),
+                .help("Sets a custom config file"),
         )
         .arg(
-            Arg::with_name("v")
-                .short("v")
-                .multiple(true)
+            Arg::new("v")
+                .short('v')
+                .action(clap::ArgAction::Count)
                 .help("Sets the level of verbosity"),
         )
         .arg(
-            Arg::with_name("daemon")
-                .short("d")
+            Arg::new("daemon")
+                .short('d')
                 .long("daemon")
-                .multiple(false)
+                .action(clap::ArgAction::SetTrue)
                 .help("Setting this flag will enable running as a daemon"),
         )
         .arg(
-            Arg::with_name("target")
-                .short("t")
+            Arg::new("target")
+                .short('t')
                 .long("target")
-                .takes_value(true)
-                .multiple(true)
+                .num_args(1..)
                 .help("The initial node to try and reach to join the cluster"),
         )
         .get_matches();
 
     let mut node_hash: HashMap<String, DateTime<Utc>> = HashMap::new();
 
-    let mut targets: Vec<String> = Vec::new();
-    if matches.is_present("target") {
-        let mut t = matches.values_of("target").unwrap();
-        for f in t {
-            node_hash.insert(String::from(f), Utc::now());
+    if let Some(targets_iter) = matches.get_many::<String>("target") {
+        for f in targets_iter {
+            node_hash.insert(f.clone(), Utc::now());
         }
     }
 
@@ -63,7 +58,7 @@ pub fn cli() {
     let cluster_nodes: Arc<Mutex<HashMap<String, DateTime<Utc>>>> = Arc::new(mutex);
 
     //TODO: use config file if exists for vars
-    if matches.is_present("daemon") {
+    if matches.get_flag("daemon") {
         println!("Running as daemon");
         let daemonize = Daemonize::new()
             .pid_file("/var/run/gary.pid")
@@ -88,7 +83,7 @@ fn run(targets: Arc<Mutex<HashMap<String, DateTime<Utc>>>>) {
     // const NODELISTENERPORT: u16 = 5555;
 
     //create thread channels
-    let (tx_cm, rx_cm): (mpsc::Sender<&str>, mpsc::Receiver<&str>) = mpsc::channel();
+    let (_tx_cm, _rx_cm): (mpsc::Sender<&str>, mpsc::Receiver<&str>) = mpsc::channel();
     // commands sent to deployment manager
     let (tx_dmc, rx_dmc): (
         mpsc::Sender<DeploymentCommand>,
@@ -109,7 +104,8 @@ fn run(targets: Arc<Mutex<HashMap<String, DateTime<Utc>>>>) {
         println!("starting first node in the cluster");
         // cluster_management::start_node(tx_cm, rx_dm);  // Communicates with Deployment Manager
 
-        cluster_management::start_node(cm_tx_debug, tx_dmc, rx_dmr, NODEHOSTNAME, cm_targets); // Communicates with Main Thread
+        cluster_management::start_node(cm_tx_debug, tx_dmc, rx_dmr, NODEHOSTNAME, cm_targets);
+        // Communicates with Main Thread
     });
 
     let api_nodes = targets.clone();

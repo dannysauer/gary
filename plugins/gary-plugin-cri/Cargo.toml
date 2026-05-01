@@ -1,0 +1,31 @@
+[package]
+name = "gary-plugin-cri"
+version = "0.0.1"
+authors = ["Marek Counts <countsmarek@gmail.com>"]
+edition = "2018"
+description = "simple cri plugin for gary"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+core = { path = "../../core" }
+anyhow = "1"
+env_logger = "0.11"
+futures-util = "0.3"
+getset = "0.1"
+log = "0.4"
+prost = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["fs", "macros", "net", "rt", "rt-multi-thread"] }
+tonic = "0.11"
+
+[build-dependencies]
+anyhow = "1"
+tonic-build = "0.11"
+
+[dev-dependencies]
+tempfile = "3"
+tokio-test = "0.4"

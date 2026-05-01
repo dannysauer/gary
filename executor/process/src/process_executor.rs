@@ -85,10 +85,8 @@ fn deployment_manage(d: Deployment, ctl_rx: Receiver<ProcessRunnerCmd>) {
     //       Adjusting procs can then happen on changed count or kid death
     loop {
         // Hey Terry; are there any messages waiting for me?
-        let msg = ctl_rx.try_recv();
-        if !msg.is_err() {
-            // handle the message
-            match msg.unwrap() {
+        if let Ok(msg) = ctl_rx.try_recv() {
+            match msg {
                 ProcessRunnerCmd::NewCount(c) => {
                     if c != count {
                         println!("Updating count to {} instances", c);
@@ -106,7 +104,7 @@ fn deployment_manage(d: Deployment, ctl_rx: Receiver<ProcessRunnerCmd>) {
         while running.len() < count {
             // there needs to be a way to get the places to run; add to launcher
             if let Spec::ProcessSpec(spec) = &d.spec.template.spec {
-                let kid = local_manage(&spec);
+                let kid = local_manage(spec);
                 println!(
                     "Spawned process {} ({}/{})",
                     kid.id(),
@@ -128,19 +126,18 @@ fn deployment_manage(d: Deployment, ctl_rx: Receiver<ProcessRunnerCmd>) {
                 running.len() + 1,
                 count
             );
-            kid.kill().expect("Command was already dead")
+            kid.kill().expect("Command was already dead");
+            kid.wait().expect("Failed to wait on killed process");
         }
 
         // check for dead kids
-        for i in 0..running.len() {
-            match running[i].try_wait() {
+        for (i, kid) in running.iter_mut().enumerate() {
+            match kid.try_wait() {
                 Ok(Some(status)) => {
-                    println!("Process {} exited w/ {}", running[i].id(), status);
+                    println!("Process {} exited w/ {}", kid.id(), status);
                     dead.push(i);
                 }
-                Ok(None) => {
-                    //println!("Process {} is ok", running[i].id());
-                }
+                Ok(None) => {}
                 Err(e) => {
                     println!("Failed checking process: {}", e);
                     dead.push(i);
@@ -149,11 +146,14 @@ fn deployment_manage(d: Deployment, ctl_rx: Receiver<ProcessRunnerCmd>) {
         }
 
         // remove *after* iterating so we don't screw up vector length
-        if dead.len() > 0 {
+        if !dead.is_empty() {
             // remove biggest to smallest index
             dead.reverse();
             for d in &dead {
-                running.remove(*d);
+                let mut exited = running.remove(*d);
+                exited
+                    .wait()
+                    .unwrap_or_else(|e| panic!("Failed to wait on exited process: {}", e));
             }
             dead.clear();
         }
@@ -184,9 +184,6 @@ fn local_manage(cmd_params: &ProcessSpec) -> std::process::Child {
     if cmd_params.args.is_some() {
         cmd.arg(cmd_params.args.clone().unwrap());
     }
-    let kid = cmd
-        .spawn()
-        .expect(&format!("failed to run '{}'", cmd_params.cmd));
-
-    return kid;
+    cmd.spawn()
+        .unwrap_or_else(|_| panic!("failed to run '{}'", cmd_params.cmd))
 }
