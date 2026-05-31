@@ -19,9 +19,9 @@ process = { path = "executor/process" }
 daemonize = "0.4.1"
 log = "0.4.6"
 chrono = "0.4"
+libloading = "0.8"
 
 [workspace]
-
 members = [
     "core",
     "gary-zmq",

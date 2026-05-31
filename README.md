@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/project-gary/gary.svg?branch=master)](https://travis-ci.org/project-gary/gary)
+[![Actions Status](https://github.com/project-gary/gary/workflows/unit-tests/badge.svg)](https://github.com/project-gary/actions)
+[![Actions Status](https://github.com/project-gary/gary/workflows/checks/badge.svg)](https://github.com/project-gary/actions)
 
 # code-name-gary
 Code Name Gary
@@ -44,7 +45,7 @@ to pass to all of these to be merged.
 
 ## Architecture
 
-Based off promise Theory. designed to be control-plane-less. All nodes created equal. [info](docs/architecture.md)
+Based on Promise Theory. designed to be control-plane-less. All nodes created equal. [info](docs/architecture.md)
 
 ## Community
 Play nice with others please. [info](docs/community.md)
