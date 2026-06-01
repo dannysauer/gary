@@ -10,7 +10,7 @@ license = "MIT"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-common = { path = "../../common" , version = "0.0.1", package = "gary-common"}
-bollard = "0.3"
-tokio = "0.1"
-futures = "0.1"
+core = { path = "../../core" }
+bollard = "0.17"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "macros"] }
+futures-util = "0.3"

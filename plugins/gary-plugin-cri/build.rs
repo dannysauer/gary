@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 const PROTO_FILE: &str = "src/kubernetes/cri/proto/api.proto";
 

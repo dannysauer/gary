@@ -5,7 +5,6 @@ use std::fs;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ClusterConfig {
-    //pub version: f32,
     #[serde(rename = "gossipConfig")]
     pub gossip_config: GossipConfig,
 
@@ -51,17 +50,16 @@ impl ClusterConfig {
             },
             initial_targets: targets,
             node_info: NodeInfo {
-                node_name: whoami::hostname(),
+                node_name: whoami::fallible::hostname().unwrap_or_else(|_| "localhost".to_string()),
             },
         }
     }
 
-    //TODO: Remove all the `.unwrap();` calls
     pub fn get_config_or_default(path: Option<&str>) -> ClusterConfig {
         if let Some(path) = path {
             if let Ok(file) = fs::read_to_string(path) {
                 if let Ok(input) = serde_yaml::to_value(&file) {
-                    let mut result = serde_yaml::to_value(&ClusterConfig::new_default()).unwrap();
+                    let mut result = serde_yaml::to_value(ClusterConfig::new_default()).unwrap();
                     merge(&mut result, &input);
                     if let Ok(result) = serde_yaml::from_value(result) {
                         return result;
@@ -69,6 +67,6 @@ impl ClusterConfig {
                 }
             }
         }
-        return ClusterConfig::new_default();
+        ClusterConfig::new_default()
     }
 }

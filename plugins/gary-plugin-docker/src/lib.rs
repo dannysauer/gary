@@ -1,143 +1,127 @@
-#[macro_use]
-extern crate common;
-extern crate bollard;
-extern crate futures;
-
-use bollard::container::{
-    Config, CreateContainerOptions, HostConfig, LogOutput, LogsOptions, StartContainerOptions,
-    StatsOptions,
-};
+use bollard::container::{Config, CreateContainerOptions, StartContainerOptions, StatsOptions};
 use bollard::Docker;
-use common::plugins::runtime::*;
-use futures::Future;
-use tokio::prelude::*;
-use tokio::runtime::*;
+use core::declare_plugin;
+use core::plugins::runtime::*;
+use tokio::runtime::Runtime;
 
 #[derive(Debug)]
 pub struct ContainerdRuntimePlugin {
     docker: Docker,
-    runner: tokio::runtime::Runtime,
+    runner: Runtime,
+}
+
+impl Default for ContainerdRuntimePlugin {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl ContainerdRuntimePlugin {
     pub fn new() -> Self {
-        let mut doc = Docker::connect_with_local_defaults().unwrap();
-        let mut rt = Runtime::new().unwrap();
-        return ContainerdRuntimePlugin {
-            runner: rt,
-            docker: doc,
-        };
+        ContainerdRuntimePlugin {
+            runner: Runtime::new().unwrap(),
+            docker: Docker::connect_with_local_defaults().unwrap(),
+        }
     }
 }
 
 declare_plugin!(ContainerdRuntimePlugin, ContainerdRuntimePlugin::new);
 
 impl RuntimePlugin for ContainerdRuntimePlugin {
-    /// The name of the plugin used to identify it.
     fn name(&self) -> String {
-        return "docker".to_string();
+        "docker".to_string()
     }
-    /// A callback fired immediately after the plugin is loaded. Usually used
-    /// for initialization.
+
     fn on_plugin_load(&self) {}
-    /// A callback fired immediately before the plugin is unloaded. Use this if
-    /// you need to do any cleanup.
     fn on_plugin_unload(&self) {}
 
     fn get_features(&self) -> Vec<RuntimeFeatures> {
-        return vec![RuntimeFeatures::WorkloadRunner, RuntimeFeatures::Container];
+        vec![RuntimeFeatures::WorkloadRunner, RuntimeFeatures::Container]
     }
+
     fn get_version(&self) -> i32 {
         0
     }
 
-    //Required for feature WorkloadRunner
     fn create_workload(
         &self,
-        id: String,
-        config: &RuntimeConfig,
-        options: &Option<SandboxConfig>,
+        _id: String,
+        _config: &RuntimeConfig,
+        _options: &Option<SandboxConfig>,
     ) -> Result<String, RuntimeError> {
-        return Err(RuntimeError::new(RuntimeErrorType::Unknown));
+        Err(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
     fn start_workload(&mut self, id: String) -> Option<RuntimeError> {
         let nginx_config = Config {
-            image: Some("nginx"),
+            image: Some(id.as_str()),
             env: Some(vec![]),
             ..Default::default()
         };
-        let res = self.runner.block_on(
+        let create_opts = CreateContainerOptions {
+            name: id.as_str(),
+            platform: None,
+        };
+        let create_result = self.runner.block_on(
             self.docker
-                .create_container(Some(CreateContainerOptions { name: "nginx" }), nginx_config),
+                .create_container(Some(create_opts), nginx_config),
         );
-        let results = self.runner.block_on(
-            self.docker
-                .start_container("nginx", None::<StartContainerOptions<String>>),
-        );
-        match results {
-            Ok(_) => return None,
-            Err(_) => return Some(RuntimeError::new(RuntimeErrorType::Unknown)),
+        if create_result.is_err() {
+            return Some(RuntimeError::new(RuntimeErrorType::Unknown));
         }
-        return Some(RuntimeError::new(RuntimeErrorType::Unknown));
+        let start_result = self.runner.block_on(
+            self.docker
+                .start_container(&id, None::<StartContainerOptions<String>>),
+        );
+        match start_result {
+            Ok(_) => None,
+            Err(_) => Some(RuntimeError::new(RuntimeErrorType::Unknown)),
+        }
     }
 
-    fn stop_workload(&self, id: String, timeout: i32) -> Option<RuntimeError> {
-        return None;
+    fn stop_workload(&self, _id: String, _timeout: i32) -> Option<RuntimeError> {
+        None
     }
 
-    fn remove_workload(&mut self, id: String) -> Option<RuntimeError> {
-        return None;
+    fn remove_workload(&mut self, _id: String) -> Option<RuntimeError> {
+        None
     }
 
     fn status_workload(&mut self, id: String) -> Result<WorkloadStatus, RuntimeError> {
-        let res = self.runner.block_on(
-            self.docker
-                .stats(
-                    &id,
-                    Some(StatsOptions {
-                        stream: true,
-                        ..Default::default()
-                    }),
-                )
-                .map(|stat| {
-                    println!(
-                        "{} - mem total: {:?} | mem usage: {:?}",
-                        stat.name, stat.memory_stats.max_usage, stat.memory_stats.usage
-                    );
-                    WorkloadStatus {
-                        current_memory: stat.memory_stats.usage.unwrap(),
-                        max_memory: stat.memory_stats.max_usage.unwrap(),
-                        workload_status: CurrentWorkloadStatus::Running,
-                    }
-                })
-                .collect(),
+        use futures_util::StreamExt;
+
+        let mut stream = self.docker.stats(
+            &id,
+            Some(StatsOptions {
+                stream: false,
+                ..Default::default()
+            }),
         );
-
-        if let Ok(res) = res {
-            if res.len() > 0 {
-                return Ok(res[0].clone());
-            }
+        let stat = self.runner.block_on(stream.next());
+        match stat {
+            Some(Ok(s)) => Ok(WorkloadStatus {
+                current_memory: s.memory_stats.usage.unwrap_or(0),
+                max_memory: s.memory_stats.max_usage.unwrap_or(0),
+                workload_status: CurrentWorkloadStatus::Running,
+            }),
+            _ => Err(RuntimeError::new(RuntimeErrorType::Unknown)),
         }
-
-        return Err(RuntimeError::new(RuntimeErrorType::Unknown));
     }
 
-    //Required for feature container && vm
     fn update_workload_resources(
         &self,
-        id: String,
-        rez: WorkloadResources,
+        _id: String,
+        _rez: WorkloadResources,
     ) -> Option<RuntimeError> {
-        return None;
+        None
     }
 
     fn exec_sync(
         &self,
-        id: String,
-        cmd: &[String],
-        timeout: i32,
+        _id: String,
+        _cmd: &[String],
+        _timeout: i32,
     ) -> (&[u8], &[u8], Option<RuntimeError>) {
-        return (&[0], &[0], None);
+        (&[], &[], None)
     }
 }

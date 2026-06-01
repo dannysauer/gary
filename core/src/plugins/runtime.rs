@@ -90,7 +90,7 @@ pub enum RuntimeErrorType {
 
 #[derive(Debug)]
 pub struct RuntimeError {
-    error_type: RuntimeErrorType,
+    pub error_type: RuntimeErrorType,
 }
 
 impl std::error::Error for RuntimeError {
@@ -107,6 +107,6 @@ impl fmt::Display for RuntimeError {
 
 impl RuntimeError {
     pub fn new(kind: RuntimeErrorType) -> Self {
-        return RuntimeError { error_type: kind };
+        RuntimeError { error_type: kind }
     }
 }

@@ -1,91 +1,90 @@
-#[macro_use]
-extern crate common;
-extern crate futures;
-
-use common::plugins::runtime::*;
-use futures::Future;
-use tokio::prelude::*;
-use tokio::runtime::*;
+use core::declare_plugin;
+use core::plugins::runtime::*;
+use tokio::runtime::Runtime;
 
 #[derive(Debug)]
 pub struct CriRuntimePlugin {
-    cri_client: String,
-    runner: tokio::runtime::Runtime,
+    _cri_client: String,
+    #[allow(dead_code)]
+    runner: Runtime,
+}
+
+impl Default for CriRuntimePlugin {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CriRuntimePlugin {
     pub fn new() -> Self {
-        let mut doc = String::from("docker");
-        let mut rt = Runtime::new().unwrap();
-        return CriRuntimePlugin {
-            cri_client: doc,
-            runner: rt,
-        };
+        CriRuntimePlugin {
+            _cri_client: String::from("cri"),
+            runner: Runtime::new().unwrap(),
+        }
     }
 }
 
 declare_plugin!(CriRuntimePlugin, CriRuntimePlugin::new);
 
 impl RuntimePlugin for CriRuntimePlugin {
-    /// The name of the plugin used to identify it.
     fn name(&self) -> String {
-        return "docker".to_string();
+        "cri".to_string()
     }
-    /// A callback fired immediately after the plugin is loaded. Usually used
-    /// for initialization.
+
     fn on_plugin_load(&self) {}
-    /// A callback fired immediately before the plugin is unloaded. Use this if
-    /// you need to do any cleanup.
     fn on_plugin_unload(&self) {}
 
     fn get_features(&self) -> Vec<RuntimeFeatures> {
-        return vec![RuntimeFeatures::WorkloadRunner, RuntimeFeatures::Container];
+        vec![RuntimeFeatures::WorkloadRunner, RuntimeFeatures::Container]
     }
+
     fn get_version(&self) -> i32 {
         0
     }
 
-    //Required for feature WorkloadRunner
     fn create_workload(
         &self,
-        id: String,
-        config: &RuntimeConfig,
-        options: &Option<SandboxConfig>,
+        _id: String,
+        _config: &RuntimeConfig,
+        _options: &Option<SandboxConfig>,
     ) -> Result<String, RuntimeError> {
-        return Err(RuntimeError::new(RuntimeErrorType::Unknown));
+        Err(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
-    fn start_workload(&mut self, id: String) -> Option<RuntimeError> {
-        return None;
+    fn start_workload(&mut self, _id: String) -> Option<RuntimeError> {
+        Some(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
-    fn stop_workload(&self, id: String, timeout: i32) -> Option<RuntimeError> {
-        return None;
+    fn stop_workload(&self, _id: String, _timeout: i32) -> Option<RuntimeError> {
+        Some(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
-    fn remove_workload(&mut self, id: String) -> Option<RuntimeError> {
-        return None;
+    fn remove_workload(&mut self, _id: String) -> Option<RuntimeError> {
+        Some(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
-    fn status_workload(&mut self, id: String) -> Result<WorkloadStatus, RuntimeError> {
-        return Err(RuntimeError::new(RuntimeErrorType::Unknown));
+    fn status_workload(&mut self, _id: String) -> Result<WorkloadStatus, RuntimeError> {
+        Err(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
-    //Required for feature container && vm
     fn update_workload_resources(
         &self,
-        id: String,
-        rez: WorkloadResources,
+        _id: String,
+        _rez: WorkloadResources,
     ) -> Option<RuntimeError> {
-        return None;
+        Some(RuntimeError::new(RuntimeErrorType::Unimplemented))
     }
 
     fn exec_sync(
         &self,
-        id: String,
-        cmd: &[String],
-        timeout: i32,
+        _id: String,
+        _cmd: &[String],
+        _timeout: i32,
     ) -> (&[u8], &[u8], Option<RuntimeError>) {
-        return (&[0], &[0], None);
+        (
+            &[],
+            &[],
+            Some(RuntimeError::new(RuntimeErrorType::Unimplemented)),
+        )
     }
 }

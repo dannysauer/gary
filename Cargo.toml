@@ -1,9 +1,35 @@
+[package]
+name = "gary"
+version = "0.1.0"
+authors = ["Marek Counts <mcounts@suse.com>"]
+edition = "2018"
+
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
+[features]
+
+[dependencies]
+clap = "4"
+core = { path = "core"}
+gary-zmq = { path = "gary-zmq" }
+executor = { path = "executor" }
+process = { path = "executor/process" }
+daemonize = "0.4.1"
+log = "0.4.6"
+chrono = "0.4"
+libloading = "0.8"
+
 [workspace]
 members = [
-    "common",
+    "core",
     "gary-zmq",
     "garyctl",
-    "gary",
-    "plugins/gary-scheduler",
+    "executor",
+    "executor/process",
+    "executor/docker",
+    "plugins/gary-plugin-docker",
     "plugins/gary-plugin-cri",
+    "plugins/gary-scheduler",
 ]

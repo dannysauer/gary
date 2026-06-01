@@ -1,3 +1,3 @@
-fn main() {
-    println!("Hello, world!");
+pub fn schedule() {
+    // TODO: implement scheduler
 }

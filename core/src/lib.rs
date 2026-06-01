@@ -1,6 +1,5 @@
 extern crate chrono;
 extern crate serde_cbor;
-extern crate whoami;
 pub mod cluster_api;
 pub mod comm;
 pub mod config;
